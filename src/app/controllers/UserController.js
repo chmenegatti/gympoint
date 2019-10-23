@@ -15,6 +15,10 @@ class UserController {
       email,
     });
   }
+
+  async upadate(req, res) {
+    return res.json({ user: req.userId });
+  }
 }
 
 export default new UserController();
