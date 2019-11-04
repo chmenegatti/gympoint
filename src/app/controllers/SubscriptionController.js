@@ -1,10 +1,10 @@
-import { parseISO, addMonths, format } from 'date-fns';
-import ptbr from 'date-fns/locale/pt-BR';
+import { parseISO, addMonths } from 'date-fns';
 import * as Yup from 'yup';
 import Subscription from '../models/Subscription';
 import Plans from '../models/Plans';
 import Students from '../models/Students';
-import Mail from '../../lib/Mail';
+import SubscriptionMail from '../jobs/SubscriptionMail';
+import Queue from '../../lib/Queue';
 
 class SubscriptionController {
   async index(req, res) {
@@ -76,21 +76,17 @@ class SubscriptionController {
       end_date,
       plan_price,
     });
-    await Mail.sendMail({
-      to: `${student.name} <${student.email}>`,
-      subject: 'Aluno Matriculado',
-      template: 'subscription',
-      context: {
-        student: student.name,
-        title,
-        date_start: format(parseISO(start_date), 'dd/MM/yyyy', {
-          locale: ptbr,
-        }),
-        date_end: format(end_date, 'dd/MM/yyyy', { locale: ptbr }),
-        price,
-        total_price: plan_price,
-      },
-    });
+
+    const allData = {
+      duration,
+      price,
+      title,
+      name: student.name,
+      email: student.email,
+    };
+
+    await Queue.add(SubscriptionMail.key, { addSubscription, allData });
+
     return res.json(addSubscription);
   }
 

@@ -1,8 +1,7 @@
-import { format } from 'date-fns';
-import ptbr from 'date-fns/locale/pt-BR';
 import HelpOrders from '../models/HelpOrders';
 import Students from '../models/Students';
-import Mail from '../../lib/Mail';
+import Queue from '../../lib/Queue';
+import AnswerMail from '../jobs/AnswerMail';
 
 class AnswerHelpController {
   async index(req, res) {
@@ -34,19 +33,9 @@ class AnswerHelpController {
       ],
     });
     const { answer, answer_at } = await help.update(req.body);
-    await Mail.sendMail({
-      to: `${help.student.name} <${help.student.email}>`,
-      subject: 'Pergunta Respondida',
-      templates: 'answer',
-      context: {
-        student: help.student.name,
-        question: help.question,
-        answer,
-        answer_at: format(answer_at, "dd'/'MMMM'/'yyyy', às' H:mm'h'", {
-          locale: ptbr,
-        }),
-      },
-    });
+
+    await Queue.add(AnswerMail.key, { help });
+
     return res.status(200).json({
       question: help.question,
       answer,
