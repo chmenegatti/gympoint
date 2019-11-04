@@ -3,11 +3,11 @@ import Checkins from '../schema/Checkin';
 
 class CheckinController {
   async index(req, res) {
-    const student_id = req.params.id;
-    const { page = 1 } = req.query;
-    const checkins = await Checkins.find({ student_id })
-      .skip(5 * page)
-      .limit(5);
+    const studentId = req.params.id;
+    const { page = 0 } = req.query;
+    const checkins = await Checkins.find({ student_id: studentId })
+      .skip(10 * page)
+      .limit(10);
     return res.status(200).json(checkins);
   }
 
@@ -35,7 +35,7 @@ class CheckinController {
       return data;
     });
 
-    if (!(numCheckins.length <= 5)) {
+    if (!(numCheckins.length < 5)) {
       return res.status(401).json({ error: 'Max checkins has reached' });
     }
     const checkin = await Checkins.create({
